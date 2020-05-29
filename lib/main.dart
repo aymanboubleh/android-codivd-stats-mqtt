@@ -368,10 +368,16 @@ class _MyAppState extends State<MyApp> {
                     padding: EdgeInsets.fromLTRB(15, 2, 15, 2),
                     child: TextField(
                       keyboardType: TextInputType.number,
+
                       decoration: InputDecoration(
                           hintText: "Seconds between publishing(default 1)"),
                       onChanged: (value) {
+                        try{
                         if (int.parse(value) < 0) return;
+
+                        }catch(e){
+                            value = '1';
+                        }
 
                         sensorsList[sensor['_index']]['_timer'] = value;
                       },
@@ -404,6 +410,7 @@ class _MyAppState extends State<MyApp> {
                               print("Client is NULL");
                               return;
                             }
+
                             setState(() {
                               int index = sensor['_index'];
                               print("OK");
