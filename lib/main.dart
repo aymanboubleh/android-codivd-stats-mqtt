@@ -3,23 +3,47 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter_sensors/flutter_sensors.dart';
 import 'package:light/light.dart';
+import 'mainpage.dart';
+import 'stats.dart';
 import 'package:mqtt_client/mqtt_client.dart';
-import 'package:sensors/sensors.dart';
 import 'package:flutter/material.dart';
 import 'package:mqtt_client/mqtt_client.dart' as mqtt;
 import 'message.dart';
 import 'package:proximity_plugin/proximity_plugin.dart';
-import 'package:mqttApp/common.dart';
+import 'common.dart';
 import 'SensorData.dart';
 
-void main() => runApp(MyApp());
+void main(){
+  runApp(MaterialApp(
+    home: Home(),
+    routes: <String, WidgetBuilder>{
+    '/mqtt':(BuildContext context)=> MqttPublisher(),
+    '/stats':(BuildContext context)=> StatsPage(),
+  }));
+}
 
-class MyApp extends StatefulWidget {
+class Home extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return new Scaffold(
+      drawer: MainDrawer(),
+      appBar: new AppBar(
+        title: Center(
+          child: Text("COVID-19"),
+        ),
+      ),
+      body: Center(
+        child: Text("Check drawer"),
+      ),
+    );
+  }
+}
+class MqttPublisher extends StatefulWidget {
   @override
   _MyAppState createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MqttPublisher> {
   PageController _pageController;
   int _page = 0;
   String titleBar = 'MQTT';
@@ -142,6 +166,7 @@ class _MyAppState extends State<MyApp> {
 //    sensorEvents();
     return MaterialApp(
       home: Scaffold(
+        drawer: MainDrawer(),
         appBar: AppBar(
           backgroundColor: Colors.blueAccent,
           title: Row(
