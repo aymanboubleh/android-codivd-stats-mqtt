@@ -1,6 +1,6 @@
 import '../chart/chart.dart';
 import '../model/novel_covid.dart';
-import '../view/single_int_report.dart';
+import 'single_int_report.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 

@@ -3,8 +3,8 @@ import '../model/novel_covid.dart';
 import '../model/pcm.dart';
 import '../service/service.dart';
 import '../chart/lineChart.dart';
-import '../view/list_ita_regioni.dart';
-import '../view/single_int_report.dart';
+import 'list_ita_regioni.dart';
+import 'single_int_report.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 

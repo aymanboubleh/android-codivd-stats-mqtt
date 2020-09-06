@@ -1,6 +1,6 @@
 import '../chart/italy_chart.dart';
 import '../model/pcm.dart';
-import '../view/single_ita_report.dart';
+import 'single_ita_report.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 

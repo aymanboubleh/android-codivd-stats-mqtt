@@ -1,7 +1,7 @@
 import '../layout/master_detail_usa.dart';
 import '../model/novel_covid.dart';
 import '../service/service.dart';
-import '../view/list_all_countries.dart';
+import 'list_all_countries.dart';
 import 'package:flutter/material.dart';
 import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 

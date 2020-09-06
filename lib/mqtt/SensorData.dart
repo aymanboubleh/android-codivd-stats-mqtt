@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import './common.dart';
+import 'common.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_sensors/flutter_sensors.dart';
 import 'package:proximity_plugin/proximity_plugin.dart';

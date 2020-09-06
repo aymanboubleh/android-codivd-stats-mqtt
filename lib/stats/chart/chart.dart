@@ -1,35 +1,29 @@
-import '../chart/chart.dart';
-import '../chart/chart_label.dart';
-import '../model/pcm.dart';
+import 'chart_label.dart';
+import '../model/novel_covid.dart';
 import '../view/single_int_report.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-import 'chart.dart';
 import 'chart_label.dart';
 
-class ItalyStatsPieChart extends StatefulWidget {
-  final Nazionale stats;
-  ItalyStatsPieChart({Key key, this.stats}) : super(key: key);
+class StatsPieChart extends StatefulWidget {
+  final Country stats;
+  StatsPieChart({Key key, final this.stats}) : super(key: key);
   @override
-  _ItalyStatsPieChart createState() => _ItalyStatsPieChart();
+  _StatsPieChartState createState() => _StatsPieChartState();
 }
 
-class _ItalyStatsPieChart extends State<ItalyStatsPieChart> {
-
+class _StatsPieChartState extends State<StatsPieChart> {
   int touchedIndex;
 
   @override
   Widget build(BuildContext context) {
-    Percent1M perc = Percent1M(widget.stats);
+    Percent1M perc = new Percent1M(widget.stats);
     List<Widget> widgets = [
       ChartLabel(
         color: SingleIntReportView.colors[0],
         label: SingleIntReportView.active,
         percent: perc.activePerc,
-      ),
-      SizedBox(
-        height: 10,
       ),
       ChartLabel(
         color: SingleIntReportView.colors[1],
@@ -47,7 +41,7 @@ class _ItalyStatsPieChart extends State<ItalyStatsPieChart> {
       child: Card(
         elevation: 0.0,
         color: Colors.grey[50],
-        child: Column( 
+        child: Column(
           children: <Widget>[
             Row(
               children: <Widget>[
@@ -72,9 +66,9 @@ class _ItalyStatsPieChart extends State<ItalyStatsPieChart> {
                         borderData: FlBorderData(
                           show: false,
                         ),
-                        sectionsSpace: 2,
+                        sectionsSpace: 0,
                         centerSpaceRadius: 30,
-                        sections: showingSections(touchedIndex, widget.stats.totaleAttualmentePositivi, widget.stats.deceduti, widget.stats.dimessiGuariti)),
+                        sections: showingSections(touchedIndex, widget.stats.active, widget.stats.deaths, widget.stats.recovered)),
                   ),
                 ),
                 Column(
@@ -94,14 +88,59 @@ class _ItalyStatsPieChart extends State<ItalyStatsPieChart> {
 
 }
 
+  List<PieChartSectionData> showingSections(int touchedIndex, int active, int deaths, int recovered) {
+    return List.generate(recovered == null ? 2 : 3, (i) {
+      final isTouched = i == touchedIndex;
+      final double fontSize = isTouched ? 25 : 16;
+      final double radius = isTouched ? 60 : 50;
+      switch (i) {
+        case 0:
+          return PieChartSectionData(
+            color: SingleIntReportView.colors[2],
+            value: deaths + 0.0,
+            title: '',
+            radius: radius,
+            titleStyle: TextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.bold,
+                color: Colors.white),
+          );
+        case 1:
+          return PieChartSectionData(
+            color: SingleIntReportView.colors[0],
+            value: active + 0.0,
+            title: '',
+            radius: radius,
+            titleStyle: TextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.bold,
+                color: Colors.white),
+          );
+        case 2:
+          return PieChartSectionData(
+            color: SingleIntReportView.colors[1],
+            value: recovered + 0.0,
+            title: '',
+            radius: radius,
+            titleStyle: TextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.bold,
+                color: Colors.white),
+          );
+        default:
+          return null;
+      }
+    });
+  }
+
 class Percent1M {
-  Nazionale report;
+  Country report;
   double deathPerc, recoveredPerc, activePerc;
 
-  Percent1M(Nazionale _report) {
+  Percent1M(Country _report) {
     this.report = _report;
-    deathPerc = (report.deceduti / (report.totaleCasi)) * 100;
-    recoveredPerc = (report.dimessiGuariti / (report.totaleCasi)) * 100;
-    activePerc = (report.totaleAttualmentePositivi / (report.totaleCasi)) * 100;
+    deathPerc = (report.deaths / (report.cases)) * 100;
+    recoveredPerc = (report.recovered / (report.cases)) * 100;
+    activePerc = (report.active / (report.cases)) * 100;
   }
 }

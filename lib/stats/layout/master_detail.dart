@@ -1,5 +1,5 @@
-import '../layout/master_detail_ita.dart';
-import '../layout/master_detail_usa.dart';
+import 'master_detail_ita.dart';
+import 'master_detail_usa.dart';
 import '../model/novel_covid.dart';
 import '../view/details.dart';
 import '../view/list_all_countries.dart';
