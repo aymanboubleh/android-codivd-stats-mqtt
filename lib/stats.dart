@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mqttApp/drawer.dart';
 import 'view/list_ita_regioni.dart';
 import 'view/list_usa_states.dart';
 import 'view/single_int_report.dart';
@@ -15,8 +16,13 @@ import 'layout/master_detail_usa.dart';
 class StatsPage extends StatelessWidget {
    @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Covid-19',
+    return Scaffold(
+      drawer: MainDrawer(),
+      appBar: new AppBar(
+        title: Center(child: Text("Covid19 Stats"),),
+      ),
+      body: MaterialApp(
+
       theme: ThemeData(
         primaryColor: Colors.grey[400],
         textTheme: GoogleFonts.latoTextTheme(Theme.of(context).textTheme),
@@ -84,6 +90,7 @@ class StatsPage extends StatelessWidget {
       routes: {
         '/': (context) => MasterDetailPage(),
       },
+    ),
     );
   }
 
