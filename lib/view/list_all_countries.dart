@@ -107,7 +107,7 @@ class _ListCountryViewState extends State<ListCountryView>
                           leading = Image.asset(
                             "assets/" +
                                 _newcountries[index].countryInfo.flag.split(
-                                    "https://corona.lmao.ninja/assets/img/flags/")[1],
+                                    "https://corona.lmao.ninja/assets/img/flags/")[0],  //LINE LLI BDELT
                             height: 24,
                           );
                         }
