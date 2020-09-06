@@ -1,12 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter_sensors/flutter_sensors.dart';
+import 'package:light/light.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:sensors/sensors.dart';
 import 'package:flutter/material.dart';
 import 'package:mqtt_client/mqtt_client.dart' as mqtt;
 import 'message.dart';
 import 'package:proximity_plugin/proximity_plugin.dart';
+import 'package:mqttApp/common.dart';
+import 'SensorData.dart';
 
 void main() => runApp(MyApp());
 
@@ -15,64 +19,79 @@ class MyApp extends StatefulWidget {
   _MyAppState createState() => _MyAppState();
 }
 
-enum SENSOR_TYPE {
-  ACCELEROMETER,
-  TEMPERATURE,
-  GYROSCOPE,
-  PROXIMITY,
-  HUMIDITY,
-}
-
 class _MyAppState extends State<MyApp> {
   PageController _pageController;
   int _page = 0;
   String titleBar = 'MQTT';
-  String broker = 'mqtt.eclipse.org';
-  int port = 1883;
-  String username = '';
-  String passwd = '';
-  String clientIdentifier = '';
-  List<dynamic> sensorsList = [
+  String broker = DEFAULT_BROKER;
+  int port = DEFAULT_PORT;
+  String username = DEFAULT_USERNAME;
+  String passwd = DEFAULT_PASSWORD;
+  String clientIdentifier = DEFAULT_CLIENT_CLASSIFIER;
+  bool sensorsListGenerated = false;
+  List<dynamic> sensorsList2 = [
     {
       '_index': 0,
       '_name': 'accelerometer1',
-      '_type': SENSOR_TYPE.ACCELEROMETER,
+      '_type': SensorTypes.ACCELEROMETER,
       '_qosValue': 2,
       '_topic': 'Home/BedRoom/DHT1/Accelerometer',
-      '_timer': 1,
+      '_timer': 2,
+      '_delay': Sensors.SENSOR_DELAY_UI,
       '_active': false,
       '_exist': true,
       '_data': null,
       '_fct': null,
       '_retain': false,
+      '_subscription': null,
     },
     {
       '_index': 1,
       '_name': 'Gyroscope1',
-      '_type': SENSOR_TYPE.GYROSCOPE,
+      '_type': SensorTypes.GYROSCOPE,
       '_qosValue': 2,
       '_topic': 'Home/BedRoom/DHT1/Gyroscope',
-      '_timer': 1,
+      '_timer': 2,
+      '_delay': Sensors.SENSOR_DELAY_UI,
       '_active': false,
       '_exist': true,
       '_data': null,
       '_fct': null,
       '_retain': false,
+      '_subscription': null,
     },
     {
       '_index': 2,
       '_name': 'Proximity1',
-      '_type': SENSOR_TYPE.PROXIMITY,
+      '_type': SensorTypes.PROXIMITY,
       '_qosValue': 2,
       '_topic': 'Home/BedRoom/DHT1/Proximity',
-      '_timer': 1,
+      '_timer': 2,
+      '_delay': Sensors.SENSOR_DELAY_UI,
       '_active': false,
       '_exist': true,
       '_data': null,
       '_fct': null,
       '_retain': false,
+      '_subscription': null,
+    },
+    {
+      '_index': 3,
+      '_name': 'Light1',
+      '_type': SensorTypes.LIGHT_SENSOR,
+      '_qosValue': 2,
+      '_topic': 'Home/BedRoom/DHT1/Light',
+      '_timer': 2,
+      '_delay': Sensors.SENSOR_DELAY_UI,
+      '_active': false,
+      '_exist': true,
+      '_data': null,
+      '_fct': null,
+      '_retain': false,
+      '_subscription': null,
     },
   ];
+  List<SensorData> sensorsList = <SensorData>[];
   mqtt.MqttClient client;
   mqtt.MqttConnectionState connectionState = MqttConnectionState.disconnected;
 
@@ -120,7 +139,7 @@ class _MyAppState extends State<MyApp> {
       });
     }
 
-    sensorEvents();
+//    sensorEvents();
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
@@ -238,7 +257,7 @@ class _MyAppState extends State<MyApp> {
 
             port = int.tryParse(portController.value.text);
             if (port == null) {
-              port = 1883;
+              port = DEFAULT_PORT;
             }
             if (usernameController.value.text.isNotEmpty) {
               username = usernameController.value.text;
@@ -287,14 +306,17 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  void updateSensorIDs() {
-    sensorsList.forEach((element) {
-      element['_name'] = clientIdentifier + element['_name'];
-    });
-  }
-
-  Column _buildSensorsPage() {
-    return Column(
+  Widget _buildSensorsPage() {
+//    if(client == null || client.connectionStatus.state != MqttConnectionState.connected)
+//      return Center(
+//        child:Text(
+//                "Please connect to a MQTT Broker first",
+//                style: TextStyle(color: Colors.redAccent),
+//              ),
+//      );
+  if(!sensorsListGenerated)
+createSensors(clientIdentifier);
+ return Column(
       children: <Widget>[
         Expanded(
           child: ListView(
@@ -304,6 +326,8 @@ class _MyAppState extends State<MyApp> {
         ),
       ],
     );
+
+
   }
 
   @override
@@ -344,12 +368,15 @@ class _MyAppState extends State<MyApp> {
   }
 
   List<Widget> _buildSensorsList() {
+    if(sensorsList.length < 1) {print('NULL SENSORSLIST') ;return [
+      new Center(child: Text("Loading?"),)
+    ].toList();}
     return sensorsList
-        .map((sensor) => Card(
+        .map((SensorData sensor) => Card(
               child: Column(
                 children: <Widget>[
                   Text(
-                    sensor['_name'],
+                    sensor.name,
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.red,
@@ -359,7 +386,7 @@ class _MyAppState extends State<MyApp> {
                     padding: EdgeInsets.fromLTRB(15, 2, 15, 2),
                     child: TextField(
                       onChanged: (value) {
-                        sensorsList[sensor['_index']]['_topic'] = value;
+                        sensor.topic = value;
                       },
                       decoration: InputDecoration(hintText: "Topic"),
                     ),
@@ -368,18 +395,16 @@ class _MyAppState extends State<MyApp> {
                     padding: EdgeInsets.fromLTRB(15, 2, 15, 2),
                     child: TextField(
                       keyboardType: TextInputType.number,
-
                       decoration: InputDecoration(
                           hintText: "Seconds between publishing(default 1)"),
                       onChanged: (value) {
-                        try{
-                        if (int.parse(value) < 0) return;
-
-                        }catch(e){
-                            value = '1';
+                        try {
+                          if (int.parse(value) < 0) return;
+                        } catch (e) {
+                          value = '2';
                         }
 
-                        sensorsList[sensor['_index']]['_timer'] = value;
+                        sensor.timer_duration = int.parse(value);
                       },
                     ),
                   ),
@@ -393,52 +418,52 @@ class _MyAppState extends State<MyApp> {
                           child: Text("retain"),
                           onPressed: () {
                             setState(() {
-                              sensor['_retain'] = !sensor['_retain'];
+                              sensor.retain = !sensor.retain;
                             });
                           },
-                          color: !sensor['_retain']
-                              ? null
-                              : Colors.lightBlueAccent,
+                          color: !sensor.retain ? null : Colors.lightBlueAccent,
                         ),
                         RaisedButton(
-                          color: sensor['_active'] ? Colors.lightGreen : null,
-                          child: sensor['_active']
+                          color: sensor.isActive ? Colors.lightGreen : null,
+                          child: sensor.isActive
                               ? Text('Disable')
                               : Text('Enable'),
                           onPressed: () {
-                            if (client == null) {
-                              print("Client is NULL");
-                              return;
-                            }
+//                            if (client == null) {
+//                              print("Client is NULL");
+//                              return;
+//                            }
 
                             setState(() {
-                              int index = sensor['_index'];
-                              print("OK");
-                              if (sensor['_active'] == true) {
-                                sensorsList[index]['_active'] = false;
-                                (sensorsList[index]['_fct'] as Timer).cancel();
+                              if (sensor.isEnabled()) {
+                                sensor.disable();
+                                print('SENSOR DISACTIVATED');
+                                print(sensor);
+                                sensor.cancelSubscriptiont();
+                                sensor.periodic_timer?.cancel();
                                 print("PRINT ---> Canceling sensor " +
-                                    sensor["_name"]);
-                                sensorsList[index]['_data'] = null;
+                                    sensor.name);
+                                sensor.data = null;
                               } else {
+                                print('SENSOR ACTIVATED');
+                                print(sensor);
+                                sensor.enable();
+                                sensor.subscribe();
                                 print("PRINT ---> Activating sensor " +
-                                    sensor["_name"]);
-                                sensorsList[index]['_active'] = true;
+                                    sensor.name);
                                 var duration;
                                 try {
-                                  duration = Duration(
-                                      seconds: int.parse(sensorsList[index]
-                                              ['_timer']
-                                          .toString()));
+                                  duration =
+                                      Duration(seconds: sensor.timer_duration);
                                 } catch (_) {
                                   duration = Duration(seconds: 1);
                                 }
-                                sensorsList[index]['_fct'] =
-                                    new Timer.periodic(duration, (Timer t) {
-                                  if (sensorsList[index]['_data'] != null &&
-                                      sensorsList[index]['_topic'] != null)
-                                    sensorPublish(sensorsList[index]);
-                                });
+//                                sensor.periodic_timer =
+//                                    Timer.periodic(duration, (Timer t) {
+//                                  if (sensor.data != null &&
+//                                      sensor.topic != null)
+//                                    sensorPublish(sensor);
+//                                });
                               }
                             });
                           },
@@ -454,59 +479,34 @@ class _MyAppState extends State<MyApp> {
         .toList();
   }
 
-  void sensorEvents() {
-    sensorsList.forEach((element) {
-      if (!element['_exist']) return;
-      switch (element['_type']) {
-        case SENSOR_TYPE.ACCELEROMETER:
-          accelerometerEvents.listen((AccelerometerEvent event) {
-            element['_data'] = handleData(element['_type'], event);
-          });
-          break;
-        case SENSOR_TYPE.PROXIMITY:
-          print("PROXIMITY SENSOR EVENT");
-          proximityEvents.listen((ProximityEvent event) {
-//            print("------------PROXIMITY EVENT--------");
-//            print(event);
-            element['_data'] = handleData(element['_type'], event);
-          });
 
-          break;
-        case SENSOR_TYPE.GYROSCOPE:
-          accelerometerEvents.listen((AccelerometerEvent event) {
-            element['_data'] = handleData(element['_type'], event);
-          });
-          break;
 
-        default:
-      }
-    });
-  }
 
-  void sensorPublish(sensor) {
-    if (sensor['_data'] == null) return;
+
+  void sensorPublish(SensorData sensor) {
+    if (sensor.data == null) return;
     if (client == null) return;
     if (client.connectionStatus.state != MqttConnectionState.connected) return;
 
     final mqtt.MqttClientPayloadBuilder builder =
         mqtt.MqttClientPayloadBuilder();
-    var data = sensor['_data'];
-    data['SENSOR_ID'] = clientIdentifier + '_' + sensor['_name'];
-    builder.addString(json.encode(sensor['_data']));
-    print(json.encode(sensor['_data']));
-    print(sensor['_topic']);
+    var data = sensor.data;
+    data['SENSOR_ID'] = sensor.name;
+    builder.addString(json.encode(sensor.data));
+    print(json.encode(sensor.data));
+    print(sensor.topic);
     client.publishMessage(
-      sensor['_topic'],
-      mqtt.MqttQos.values[sensor['_qosValue']],
+      sensor.topic,
+      mqtt.MqttQos.values[sensor.qosValue],
       builder.payload,
-      retain: sensor['_retain'],
+      retain: sensor.retain,
     );
 
     setState(() {
       messages.add(Message(
-        topic: sensor['_topic'],
+        topic: sensor.topic,
         message: data.toString(),
-        qos: mqtt.MqttQos.values[sensor['_qosValue']],
+        qos: mqtt.MqttQos.values[sensor.qosValue],
       ));
       try {
         messageController.animateTo(
@@ -516,32 +516,6 @@ class _MyAppState extends State<MyApp> {
         );
       } catch (_) {}
     });
-  }
-
-  dynamic handleData(SENSOR_TYPE sensorType, event) {
-    var data = {};
-    switch (sensorType) {
-      case SENSOR_TYPE.ACCELEROMETER:
-        event = event as AccelerometerEvent;
-        data = {'x': event.x, 'y': event.x, 'z': event.z};
-        break;
-      case SENSOR_TYPE.GYROSCOPE:
-        data = {'x': event.x, 'y': event.x, 'z': event.z};
-        break;
-      case SENSOR_TYPE.PROXIMITY:
-        event = event as ProximityEvent;
-        data = {'triggered': event.x == "Yes"};
-        break;
-      case SENSOR_TYPE.TEMPERATURE:
-        // TODO: Handle this case.
-        break;
-      case SENSOR_TYPE.HUMIDITY:
-        // TODO: Handle this case.
-        break;
-    }
-    String date = new DateTime.now().toString();
-    data['Date'] = date.substring(0, date.indexOf("."));
-    return data;
   }
 
 //
@@ -579,6 +553,7 @@ class _MyAppState extends State<MyApp> {
 
   void _disconnect() {
     client.disconnect();
+    sensorsList = null;
     _onDisconnected();
   }
 
@@ -589,20 +564,18 @@ class _MyAppState extends State<MyApp> {
     print('MQTT client disconnected');
   }
 
-  Wrap _buildQosChoiceChips(sensor) {
+  Wrap _buildQosChoiceChips(SensorData sensor) {
     return Wrap(
       spacing: 4.0,
       children: List<Widget>.generate(
         3,
         (int index) {
-          int sensor_index = sensor['_index'];
           return ChoiceChip(
             label: Text('QoS level $index'),
-            selected: sensorsList[sensor_index]['_qosValue'] == index,
+            selected: sensor.qosValue == index,
             onSelected: (bool selected) {
               setState(() {
-                sensorsList[sensor_index]['_qosValue'] =
-                    selected ? index : null;
+                sensor.qosValue = selected ? index : null;
               });
             },
           );
@@ -610,4 +583,57 @@ class _MyAppState extends State<MyApp> {
       ).toList(),
     );
   }
+  createSensors(String clientID) async{
+    print('Cllaed');
+  List<SensorData> list =  [
+//    new SensorData(clientID + "_" + "Accelerometer", SensorTypes.ACCELEROMETER,
+//        "/Home/BedRoom/DHT1/Accelerometer"),
+//    new SensorData(clientID + "_" + "Linear_Acceleration", SensorTypes.LINEAR_ACCELERATION,
+//        "/Home/BedRoom/DHT1/LinearAcceleration"),
+//    new SensorData(clientID + "_" + "Light", SensorTypes.LIGHT_SENSOR,
+//        "/Home/BedRoom/DHT1/LightSensor"),
+//      new SensorData(clientID + "_" + "Magnetic_Field", SensorTypes.MAGNETIC_FIELD,
+//        "/Home/BedRoom/DHT1/MagneticField"),
+//          new SensorData(clientID + "_" + "Humidity", SensorTypes.HUMIDITY,
+//        "/Home/BedRoom/DHT1/Humidity"),
+//          new SensorData(clientID + "_" + "Temperature", SensorTypes.TEMPERATURE,
+//        "/Home/BedRoom/DHT1/Temperature"),
+//              new SensorData(clientID + "_" + "Pressure", SensorTypes.PRESSURE,
+//        "/Home/BedRoom/DHT1/Pressure"),
+//              new SensorData(clientID + "_" + "Ambiant_Temperature", SensorTypes.AMBIANT_TEMPERATURE,
+//        "/Home/BedRoom/DHT1/Ambiant_Temperature"),
+//    new SensorData(clientID + "_" + "Gyroscope",SensorTypes.GYROSCOPE,
+//        "/Home/BedRoom/DHT1/Gyroscope"),
+    new SensorData(clientID + "_" + "Proximity",SensorTypes.PROXIMITY,
+        "/Home/BedRoom/DHT1/Proximity"),
+  ].toList();
+
+//  map((SensorData sensor) async {
+//
+//    bool isAvailable = await SensorManager().isSensorAvailable(sensor.type);
+//            if(isAvailable){
+//              print('SENSOR' + sensor.type.toString() + 'is Available');
+//              setState(() {
+//              sensorsList.add(sensor);
+//
+//              });
+//        }
+//        print('SENSOR' + sensor.type.toString() + 'is NOT Available');
+//  });
+//
+    list.forEach((element) async{
+              bool isAvailable = await SensorManager().isSensorAvailable(element.type);
+            if(isAvailable) {
+              print('SENSOR' + element.type.toString() + 'is Available');
+              setState(() {
+                sensorsList.add(element);
+              });
+            }
+              });
+    sensorsListGenerated = true;
+
+
 }
+
+}
+

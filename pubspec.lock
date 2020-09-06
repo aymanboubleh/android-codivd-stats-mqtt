@@ -64,6 +64,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.1.3"
+  enviro_sensors:
+    dependency: "direct main"
+    description:
+      name: enviro_sensors
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.1"
   event_bus:
     dependency: transitive
     description:
@@ -76,6 +83,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_sensors:
+    dependency: "direct main"
+    description:
+      name: flutter_sensors
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.6"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -88,6 +102,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.12"
+  light:
+    dependency: "direct main"
+    description:
+      name: light
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.1"
   matcher:
     dependency: transitive
     description:
@@ -108,7 +129,7 @@ packages:
       name: mqtt_client
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "5.6.3"
+    version: "7.1.0"
   path:
     dependency: transitive
     description:
