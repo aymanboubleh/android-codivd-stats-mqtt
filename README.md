@@ -1,7 +1,9 @@
 # mqttApp
+The following app was developed as a part of an IoT Big Data project to collect useful information about users.
 
-A new Flutter project.
+This app allows you to establish a connection to a MQTT broker and send messages containing device sensor information to specific topics.
 
+A demo is available here https://youtu.be/WOLmTDeXj7c
 ## Getting Started
 
 This project is a starting point for a Flutter application.
